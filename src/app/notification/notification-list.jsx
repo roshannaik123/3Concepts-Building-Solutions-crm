@@ -121,7 +121,7 @@ const NotificationList = () => {
       <DataTable
         data={data?.data?.data || []}
         columns={columns}
-        pageSize={10}
+      pageSize={data?.data?.per_page || 10}
         searchPlaceholder="Search Notification..."
         extraButton={
           <Button

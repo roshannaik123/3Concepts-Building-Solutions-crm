@@ -5,20 +5,24 @@ import LoadingBar from "@/components/loader/loading-bar";
 import ToggleStatus from "@/components/toogle/status-toogle";
 import { EMPLOYEE_API } from "@/constants/apiConstants";
 import { useGetApiMutation } from "@/hooks/useGetApiMutation";
+import { keepPreviousData } from "@tanstack/react-query";
+import useDebounce from "@/hooks/useDebounce";
 import { getImageBaseUrl, getNoImageUrl } from "@/utils/imageUtils";
 import { Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const EmployeeList = () => {
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const debouncedSearch = useDebounce(search, 500);
   const navigate = useNavigate();
-  const {
-    data: data,
-    isLoading,
-    isError,
-    refetch,
-  } = useGetApiMutation({
-    url: EMPLOYEE_API.list,
-    queryKey: ["employee-list"],
+  const { data, isLoading, isError, refetch } = useGetApiMutation({
+    url: `${EMPLOYEE_API.list}?search=${debouncedSearch}&page=${page + 1}`,
+    queryKey: ["employee-list", debouncedSearch, page],
+    options: {
+      placeholderData: keepPreviousData,
+    },
   });
 
   const imageUrlArray = data?.image_url || data?.data?.image_url || [];
@@ -47,6 +51,7 @@ const EmployeeList = () => {
       },
       enableSorting: false,
     },
+
     {
       header: "Name",
       accessorKey: "name",
@@ -115,11 +120,18 @@ const EmployeeList = () => {
     <DataTable
       data={data?.data?.data || []}
       columns={columns}
-      pageSize={10}
+      pageSize={data?.data?.per_page || 10}
       searchPlaceholder="Search Employee..."
       addButton={{
         to: "/create-employee",
         label: "Add Employee",
+      }}
+      serverPagination={{
+        onSearch: setSearch,
+        onPageChange: setPage,
+        pageIndex: page,
+        pageCount: data?.data?.last_page || 1,
+        total: data?.data?.total || 0,
       }}
     />
   );

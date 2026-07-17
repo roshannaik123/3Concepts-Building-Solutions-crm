@@ -76,7 +76,7 @@ const CountryList = () => {
       <DataTable
         data={data?.data || []}
         columns={columns}
-        pageSize={10}
+        pageSize={data?.per_page || 10}
         searchPlaceholder="Search country..."
         addButton={{
           onClick: handleCreate,

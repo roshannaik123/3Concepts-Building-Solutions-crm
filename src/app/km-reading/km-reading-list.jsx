@@ -4,8 +4,8 @@ import LoadingBar from "@/components/loader/loading-bar";
 import { KM_API } from "@/constants/apiConstants";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useGetApiMutation } from "@/hooks/useGetApiMutation";
-import { useQueryClient } from "@tanstack/react-query";
-
+import { useQueryClient, keepPreviousData } from "@tanstack/react-query";
+import useDebounce from "@/hooks/useDebounce";
 import { Edit, Trash2, PlusCircle } from "lucide-react";
 import moment from "moment";
 import { useSelector } from "react-redux";
@@ -39,14 +39,21 @@ const KMReadingList = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedReadingId, setSelectedReadingId] = useState(null);
 
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const debouncedSearch = useDebounce(search, 500);
+
   const {
     data: data,
     isLoading,
     isError,
     refetch,
   } = useGetApiMutation({
-    url: KM_API.list,
-    queryKey: ["km-reading-list"],
+    url: `${KM_API.list}?search=${debouncedSearch}&page=${page + 1}`,
+    queryKey: ["km-reading-list", debouncedSearch, page],
+    options: {
+      placeholderData: keepPreviousData,
+    },
   });
 
   const handleDelete = async (id) => {
@@ -149,7 +156,7 @@ const KMReadingList = () => {
       <DataTable
         data={data?.data?.data || []}
         columns={columns}
-        pageSize={10}
+        pageSize={data?.data?.per_page || 10}
         searchPlaceholder="Search readings..."
         extraButton={
           <Button
@@ -160,6 +167,13 @@ const KMReadingList = () => {
             Add KM Reading
           </Button>
         }
+        serverPagination={{
+          onSearch: setSearch,
+          onPageChange: setPage,
+          pageIndex: page,
+          pageCount: data?.data?.last_page || 1,
+          total: data?.data?.total || 0,
+        }}
       />
 
       <CreateKMReading isOpen={isCreateOpen} onOpenChange={setIsCreateOpen} />

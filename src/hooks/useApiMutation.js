@@ -8,6 +8,7 @@ export function useApiMutation() {
   const [error, setError] = useState(null);
   const reduxToken = useSelector((state) => state.auth.token);
   const token = getAuthToken(reduxToken);
+  
   const trigger = async ({
     url,
     method = "get",

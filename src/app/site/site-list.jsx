@@ -123,7 +123,7 @@ const SiteList = () => {
       <DataTable
         data={data?.data?.data || []} // Assuming same nesting as employee
         columns={columns}
-        pageSize={10}
+        pageSize={data?.data?.per_page || 10}
         searchPlaceholder="Search sites..."
         extraButton={
           <Button

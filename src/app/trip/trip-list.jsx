@@ -151,7 +151,7 @@ const TripList = () => {
     <DataTable
       data={data?.data?.data || []}
       columns={columns}
-      pageSize={10}
+      pageSize={data?.data?.per_page || 10}
       searchPlaceholder="Search trips..."
       addButton={{
         to: "/create-trip",
