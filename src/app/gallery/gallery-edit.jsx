@@ -91,7 +91,7 @@ const GalleryEdit = ({ galleryId }) => {
   const validate = () => {
     const newErrors = {};
     if (!preview.gallery_image && !formData.gallery_image)
-      newErrors.gallery_image = "Image is required";
+      newErrors.gallery_image ="Image is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
