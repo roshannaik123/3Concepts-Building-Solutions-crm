@@ -4,13 +4,14 @@ import LoadingBar from "@/components/loader/loading-bar";
 import { TRIP_API } from "@/constants/apiConstants";
 import { useApiMutation } from "@/hooks/useApiMutation";
 import { useGetApiMutation } from "@/hooks/useGetApiMutation";
-import { useQueryClient } from "@tanstack/react-query";
 import { Edit, Trash2, PlusCircle, Boxes } from "lucide-react";
 import moment from "moment";
 import { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import useDebounce from "@/hooks/useDebounce";
+import { useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,15 +30,15 @@ const TripList = () => {
   const { trigger: deleteTrigger } = useApiMutation();
   const user = useSelector((state) => state.auth.user);
   const userType = Number(user?.user_type);
-
-  const {
-    data: data,
-    isLoading,
-    isError,
-    refetch,
-  } = useGetApiMutation({
-    url: TRIP_API.list,
-    queryKey: ["trip-list"],
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const debouncedSearch = useDebounce(search, 500);
+  const { data, isLoading, isError, refetch } = useGetApiMutation({
+    url: `${TRIP_API.list}?search=${debouncedSearch}&page=${page + 1}`,
+    queryKey: ["trip-list", debouncedSearch, page],
+    options: {
+      placeholderData: keepPreviousData,
+    },
   });
 
   const handleDelete = async (id) => {
@@ -156,6 +157,13 @@ const TripList = () => {
       addButton={{
         to: "/create-trip",
         label: "Add Trip",
+      }}
+      serverPagination={{
+        onSearch: setSearch,
+        onPageChange: setPage,
+        pageIndex: page,
+        pageCount: data?.data?.last_page || 1,
+        total: data?.data?.total || 0,
       }}
     />
   );
