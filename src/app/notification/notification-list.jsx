@@ -12,20 +12,21 @@ import moment from "moment";
 import { useState } from "react";
 import CreateNotification from "./create-notification";
 import EditNotification from "./edit-notification";
-
+import useDebounce from "@/hooks/useDebounce";
+import { keepPreviousData } from "@tanstack/react-query";
 const NotificationList = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedNotificationId, setSelectedNotificationId] = useState(null);
-
-  const {
-    data: data,
-    isLoading,
-    isError,
-    refetch,
-  } = useGetApiMutation({
-    url: NOTIFICATION_API.list,
-    queryKey: ["notification-list"],
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const debouncedSearch = useDebounce(search, 500);
+  const { data, isLoading, isError, refetch } = useGetApiMutation({
+    url: `${NOTIFICATION_API.list}?search=${debouncedSearch}&page=${page + 1}`,
+    queryKey: ["notification-list", debouncedSearch, page],
+    options: {
+      placeholderData: keepPreviousData,
+    },
   });
 
   const IMAGE_FOR = "Notification";
@@ -121,7 +122,7 @@ const NotificationList = () => {
       <DataTable
         data={data?.data?.data || []}
         columns={columns}
-      pageSize={data?.data?.per_page || 10}
+        pageSize={data?.data?.per_page || 10}
         searchPlaceholder="Search Notification..."
         extraButton={
           <Button
@@ -134,6 +135,13 @@ const NotificationList = () => {
             Add Notification
           </Button>
         }
+        serverPagination={{
+          onSearch: setSearch,
+          onPageChange: setPage,
+          pageIndex: page,
+          pageCount: data?.data?.last_page || 1,
+          total: data?.data?.total || 0,
+        }}
       />
       <CreateNotification
         isOpen={isCreateOpen}
